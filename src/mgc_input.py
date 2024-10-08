@@ -1,6 +1,124 @@
 import pandas as pd
+import re
+from unidecode import unidecode
+import nltk
+from sklearn.model_selection import train_test_split
 
-def read_data():
-    train = pd.read_csv("../data/train.txt", delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"])
-    test = pd.read_csv("../data/test_no_labels.txt", delimiter='\t', names=["Title", "Industry", "Director", "Plot"])
-    return train, test
+# Download stopwords
+nltk.download('stopwords')
+stop_words = set(nltk.corpus.stopwords.words('english'))
+
+def split_data(train_data):
+    """
+    Splits the training data into training, validation, and test datasets.
+
+    Args:
+        train_data (pd.DataFrame): The original training data.
+
+    Returns:
+        tuple: A tuple containing the training, validation, and test datasets (train_data, validation_data, test_data).
+    """
+    # First, split off 80% for training and 20% for validation + test
+    train_data, temp_data = train_test_split(
+        train_data, 
+        test_size=0.2, 
+        shuffle=True,
+        random_state=42
+    )
+
+    # Now, split the remaining 20% into 10% validation and 10% test
+    validation_data, test_data = train_test_split(
+        temp_data, 
+        test_size=0.5, 
+        shuffle=True,
+        random_state=42
+    )
+
+    return train_data, validation_data, test_data
+
+
+class DataCleaner:
+    def __init__(self, train_path, test_path, output_path):
+        """
+        Initialize the DataCleaner with file paths.
+        
+        Args:
+            train_path (str): Path to the training data file.
+            test_path (str): Path to the test data file.
+            output_path (str): Directory where output files will be saved.
+        """
+        self.train_path = train_path
+        self.test_path = test_path
+        self.output_path = output_path
+
+    def read_data(self):
+        """Reads the training and test datasets and cleans the data.
+
+        Returns:
+            tuple: A tuple containing the cleaned training dataset (pd.DataFrame) and the test dataset (pd.DataFrame).
+        """
+        # Read the training and test data
+        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"]).head(n=1000)
+        test = pd.read_csv(self.test_path, delimiter='\t', names=["Title", "Industry", "Director", "Plot"])
+
+        # Check for non-alphanumeric characters
+        self.is_there_non_alphanum(train)
+
+        # Clean all columns in the training data
+        train = train.map(self.remove_non_alphanum)
+
+        # Remove stop words in the 'Plot' column in the training data
+        train['Plot'] = train['Plot'].apply(self.lowercase_and_remove_stopwords)
+
+        # Output the cleaned training data to a txt file with tabs
+        train.to_csv(f"{self.output_path}/cleaned_train_data.txt", sep='\t', header=False, index=False)
+
+        return train, test
+
+    def is_there_non_alphanum(self, dataset):
+        """Finds and logs non-alphanumeric characters in the dataset.
+
+        Args:
+            dataset (pd.DataFrame): The dataset to check for non-alphanumeric characters.
+        """
+        # Extract non-alphanumeric characters from all columns
+        non_alphanumeric_characters = set()
+        for col in dataset.columns:
+            for string in dataset[col]:
+                if isinstance(string, str):  # Only process string columns
+                    non_alphanumeric_characters.update(re.findall(pattern=r'[^a-zA-Z0-9\s]', string=string))
+
+        # Output the non-alphanumeric characters to a txt file
+        with open(f"{self.output_path}/non_alphanumeric_characters_found.txt", "w") as f:
+            for char in sorted(non_alphanumeric_characters):
+                f.write(f"{char}\n")
+
+    def remove_non_alphanum(self, string):
+        """Removes accents and non-alphanumeric characters from a string.
+
+        Args:
+            string (str): The string to be cleaned.
+
+        Returns:
+            str: The cleaned string without accents and non-alphanumeric characters.
+        """
+        if isinstance(string, str):  # Ensure only strings are processed
+            string = unidecode(string)  # Remove accents
+            string = re.sub(r'[^a-zA-Z0-9\s]', '', string)  # Remove non-alphanumeric characters
+        return string
+
+    def lowercase_and_remove_stopwords(self, string):
+        """Removes stop words from a given string.
+
+        Args:
+            string (str): The input string from which stop words are to be removed.
+
+        Returns:
+            str: The processed string with stop words removed and converted to lowercase.
+        """
+        # Convert text to lowercase and split into words
+        words = string.lower().split()
+        # Remove stop words
+        filtered_words = [word for word in words if word not in stop_words]
+        # Join the filtered words back into a single string
+        return ' '.join(filtered_words)

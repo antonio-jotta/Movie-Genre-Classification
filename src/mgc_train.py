@@ -5,9 +5,15 @@ import numpy as np
 from official.nlp import optimization
 from sklearn.preprocessing import LabelEncoder
 
-def train_model(train):
+
+def train_model(train, validation):
+    # Prepare the training data
     X_train = train['Plot'].tolist()
     y_train = train['Genre'].tolist()  # Make sure this is label-encoded
+
+    # Prepare the validation data
+    X_val = validation['Plot'].tolist()
+    y_val = validation['Genre'].tolist()
 
     # Preprocess and BERT models from TensorFlow Hub
     preprocess_url = "https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3"
@@ -41,8 +47,15 @@ def train_model(train):
 
     # Encode the labels using the dictionary
     y_train_encoded = np.array([genre_to_index[genre] for genre in y_train])
+    y_val_encoded = np.array([genre_to_index[genre] for genre in y_val])
 
     # Use y_train_encoded for training
-    history = classifier_model.fit(tf.constant(X_train), y_train_encoded, epochs=3, batch_size=16)
+    history = classifier_model.fit(
+        tf.constant(X_train), 
+        y_train_encoded, 
+        validation_data=(tf.constant(X_val), y_val_encoded), 
+        epochs=3, 
+        batch_size=16
+    )
 
     classifier_model.save("trained_models/bert_en_uncased", save_format="tf")
