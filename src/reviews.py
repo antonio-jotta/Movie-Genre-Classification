@@ -3,6 +3,7 @@ import bert_train
 import bert_test
 import mgc_output
 import knn
+import svm
 
 
 def main():
@@ -40,8 +41,14 @@ def main():
     ####################
     # Predict using k-NN
     ####################
-    knn_model, vectorizer, encoder = knn.train_model(train=train_data, validation=test_data)
-    results_test_predictions = knn.test_model(model=knn_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+    # knn_model, vectorizer, encoder = knn.train_model(train=train_data, validation=test_data)
+    # results_test_predictions = knn.test_model(model=knn_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+
+    ###################
+    # Predict using SVM
+    ###################
+    svm_model, vectorizer, encoder = svm.train_model(train=train_data, validation=test_data)
+    results_test_predictions = svm.test_model(model=svm_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
 
     ###############################################################
     # Print the results of the predictions on the results test data
