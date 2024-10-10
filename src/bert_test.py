@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text as text
 import numpy as np
+from sklearn.metrics import f1_score
 
 
 def test_sample(test):
@@ -56,7 +57,8 @@ def accuracy_in_test_data(train_data, test_data):
 
 def interpret_predictions_test_data(genre_labels, predictions, unique_genres):
     """
-    Interprets the model's predictions and calculates the accuracy against true labels.
+    Interprets the model's predictions, calculates the accuracy against true labels, 
+    and computes the F1 score.
 
     Args:
         genre_labels (pd.Series): The true genre labels from the test dataset.
@@ -64,7 +66,7 @@ def interpret_predictions_test_data(genre_labels, predictions, unique_genres):
         unique_genres (list): A list of unique genre labels for decoding predictions.
 
     Returns:
-        None: This function does not return any value; it prints the number of matches and percentage.
+        None: Prints the number of matches, percentage accuracy, and the F1 score.
     """
     # Get the predicted class indices by taking the index of the maximum value in predictions
     predicted_class_indices = np.argmax(predictions, axis=1)
@@ -87,3 +89,7 @@ def interpret_predictions_test_data(genre_labels, predictions, unique_genres):
 
     # Print the number of matches and percentage
     print(f"Number of matches: {matches}/{total_pairs} ({percentage_matches:.2f}%).")
+
+    # Calculate and print the F1 score
+    f1 = f1_score(genre_labels, predicted_classes, average='weighted')
+    print(f"F1 Score: {f1:.4f}")
