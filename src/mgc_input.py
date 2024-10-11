@@ -37,6 +37,25 @@ def split_data(train_data):
     return train_data, validation_data, test_data
 
 
+def check_imbalance(data):
+    """
+    Checks for class imbalance in the dataset based on the 'Genre' column and prints the count of each unique genre.
+
+    Args:
+        data (pd.DataFrame): Dataset containing a 'Genre' column.
+
+    Returns:
+        None: Prints the counts of each genre.
+    """
+    # Get the unique genres and their counts
+    genre_counts = data['Genre'].value_counts()
+
+    # Print the count of each genre
+    print("Genre counts:")
+    for genre, count in genre_counts.items():
+        print(f"\t{genre}: {count} occurrences")
+
+
 class DataCleaner:
     def __init__(self, train_path, test_path, output_path):
         """

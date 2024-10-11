@@ -22,6 +22,7 @@ def main():
     
     # Read and clean the training and test data
     train_data, results_test_data = Cleaner.read_data()
+    mgc_input.check_imbalance(data=train_data)
 
     # Split the training data into training (80%) and validation/test sets (10% each)
     train_data, validation_data, test_data = mgc_input.split_data(train_data=train_data)
@@ -47,17 +48,17 @@ def main():
     ###################
     # Predict using SVM
     ###################
-    svm_model, vectorizer, encoder = svm.train_model(train=train_data, validation=test_data)
-    results_test_predictions = svm.test_model(model=svm_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+    # svm_model, vectorizer, encoder = svm.train_model(train=train_data, validation=test_data)
+    # results_test_predictions = svm.test_model(model=svm_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
 
     ###############################################################
     # Print the results of the predictions on the results test data
     ###############################################################
-    mgc_output.print_result(
-        data=results_test_data, 
-        predictions=results_test_predictions, 
-        unique_genres=train_data['Genre'].unique()
-    )
+    # mgc_output.print_result(
+    #     data=results_test_data, 
+    #     predictions=results_test_predictions, 
+    #     unique_genres=train_data['Genre'].unique()
+    # )
 
 
 if __name__ == "__main__":
