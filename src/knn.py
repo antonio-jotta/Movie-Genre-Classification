@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def train_model(train, validation):
+def train_model(X_train, y_train, X_val, y_val):
     """
     Trains a k-NN model using TfidfVectorizer for plots and OneHotEncoder for directors.
 
@@ -20,23 +20,6 @@ def train_model(train, validation):
         vectorizer: The fitted TfidfVectorizer used for text transformation.
         encoder: The fitted OneHotEncoder used for encoding directors.
     """
-    # Vectorize the movie plots
-    vectorizer = TfidfVectorizer()
-    X_train_plot = vectorizer.fit_transform(train['Plot'])
-    X_val_plot = vectorizer.transform(validation['Plot'])
-
-    # One-hot encode the directors
-    encoder = OneHotEncoder(handle_unknown='ignore')
-    X_train_director = encoder.fit_transform(train[['Director']])
-    X_val_director = encoder.transform(validation[['Director']])
-
-    # Combine plot and director features using sparse matrix stacking
-    X_train = hstack([X_train_plot, X_train_director])
-    X_val = hstack([X_val_plot, X_val_director])
-
-    y_train = train['Genre']
-    y_val = validation['Genre']
-
     # Get the unique genres in the order that corresponds to the model's internal representation
     unique_genres = np.unique(y_train)
 
@@ -75,10 +58,7 @@ def train_model(train, validation):
 
     print(f"\nBest k={best_k} with F1 Score = {best_f1}")
 
-    # Call the plot function to plot F1 vs k
-    plot_f1_vs_k(k_values, f1_scores)
-
-    return best_model, vectorizer, encoder
+    return best_model, k_values, f1_scores
 
 
 def plot_f1_vs_k(k_values, f1_scores):
@@ -102,7 +82,7 @@ def plot_f1_vs_k(k_values, f1_scores):
     plt.savefig("../plots/knn_f1")
 
 
-def test_model(model, vectorizer, encoder, test):
+def test_model(model, test):
     """
     Tests the trained k-NN model on a new dataset with both plot and director features.
 
@@ -115,11 +95,32 @@ def test_model(model, vectorizer, encoder, test):
     Returns:
         np.ndarray: Predicted probabilities for each genre.
     """
+    return model.predict_proba(test)
+
+
+def vectorize_and_encode_data(train, validation, test):
+    # Vectorize the movie plots
+    vectorizer = TfidfVectorizer()
+    X_train_plot = vectorizer.fit_transform(train['Plot'])
+    X_val_plot = vectorizer.transform(validation['Plot'])
+
+    # One-hot encode the directors
+    encoder = OneHotEncoder(handle_unknown='ignore')
+    X_train_director = encoder.fit_transform(train[['Director']])
+    X_val_director = encoder.transform(validation[['Director']])
+
+    # Combine plot and director features using sparse matrix stacking
+    X_train = hstack([X_train_plot, X_train_director])
+    X_val = hstack([X_val_plot, X_val_director])
+
+    y_train = train['Genre']
+    y_val = validation['Genre']
+
     # Use the vectorizer and encoder trained during the model training
     X_plot = vectorizer.transform(test['Plot'])
     X_director = encoder.transform(test[['Director']])
 
     # Combine plot and director features
-    X = hstack([X_plot, X_director])
+    X_test = hstack([X_plot, X_director])
 
-    return model.predict_proba(X)
+    return X_train, y_train, X_val, y_val, X_test

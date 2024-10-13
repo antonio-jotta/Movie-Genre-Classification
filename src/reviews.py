@@ -25,16 +25,16 @@ def main():
     mgc_input.check_imbalance(data=train_data)
 
     # Split the training data into training (80%) and validation/test sets (10% each)
-    train_data, validation_data, test_data = mgc_input.split_data(train_data=train_data)
+    train_data, validation_data = mgc_input.split_data(train_data=train_data)
 
     ####################
     # Predict using BERT
     ####################
-    # # # Uncomment the following line if the model needs to be trained again
-    # bert_train.train_model(train=train_data, validation=validation_data) 
+    # # Uncomment the following line if the model needs to be trained again
+    # bert_train.train_model(train=train_data, validation=validation_data)
 
     # # Evaluate the model's accuracy on the test data
-    # bert_test.accuracy_in_test_data(train_data=train_data, test_data=test_data)
+    # bert_test.accuracy_in_test_data(train_data=train_data, test_data=validation_data)
 
     # # Uncomment the following lines to get predictions on the results test data
     # results_test_predictions = bert_test.test_sample(test=results_test_data)
@@ -42,14 +42,45 @@ def main():
     ####################
     # Predict using k-NN
     ####################
-    # knn_model, vectorizer, encoder = knn.train_model(train=train_data, validation=test_data)
-    # results_test_predictions = knn.test_model(model=knn_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+    # X_train, y_train, X_val, y_val, X_test = knn.vectorize_and_encode_data(
+    #     train=train_data,
+    #     validation=validation_data,
+    #     test=results_test_data
+    # )
+    # knn_model, k_values, f1_scores = knn.train_model(
+    #     X_train=X_train,
+    #     y_train=y_train,
+    #     X_val=X_val,
+    #     y_val=y_val
+    # )
+    # knn.plot_f1_vs_k(k_values=k_values, f1_scores=f1_scores)
+    # results_test_predictions = knn.test_model(model=knn_model, test=X_test)
 
     ###################
     # Predict using SVM
     ###################
-    # svm_model, vectorizer, encoder = svm.train_model(train=train_data, validation=test_data)
-    # results_test_predictions = svm.test_model(model=svm_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+    X_train, y_train, X_val, y_val, X_test = knn.vectorize_and_encode_data(
+        train=train_data,
+        validation=validation_data,
+        test=results_test_data
+    )
+    # # Do grid search to get the best parameters
+    # svm_model, results = svm.do_svm_grid_search(
+    #     X_train=X_train,
+    #     y_train=y_train,
+    #     X_val=X_val,
+    #     y_val=y_val
+    # )
+    # svm.plot_svm_history(grid_search_results=results)
+    
+    # Use the best found model in grid search
+    svm_model = svm.svm_model(
+        X_train=X_train, 
+        y_train=y_train,
+        X_val=X_val,
+        y_val=y_val
+    )
+    results_test_predictions = svm.test_model(model=svm_model, test=X_test)
 
     ###############################################################
     # Print the results of the predictions on the results test data

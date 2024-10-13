@@ -19,22 +19,14 @@ def split_data(train_data):
         tuple: A tuple containing the training, validation, and test datasets (train_data, validation_data, test_data).
     """
     # First, split off 80% for training and 20% for validation + test
-    train_data, temp_data = train_test_split(
+    train_data, validation_data = train_test_split(
         train_data, 
         test_size=0.2, 
         shuffle=True,
         random_state=42
     )
 
-    # Now, split the remaining 20% into 10% validation and 10% test
-    validation_data, test_data = train_test_split(
-        temp_data, 
-        test_size=0.5, 
-        shuffle=True,
-        random_state=42
-    )
-
-    return train_data, validation_data, test_data
+    return train_data, validation_data
 
 
 def check_imbalance(data):
@@ -77,7 +69,7 @@ class DataCleaner:
             tuple: A tuple containing the cleaned training dataset (pd.DataFrame) and the test dataset (pd.DataFrame).
         """
         # Read the training and test data
-        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"]).head(n=1000)
+        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"]).head(n=2000)
         test = pd.read_csv(self.test_path, delimiter='\t', names=["Title", "Industry", "Director", "Plot"])
 
         # Check for non-alphanumeric characters
