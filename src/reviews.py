@@ -42,24 +42,24 @@ def main():
     ####################
     # Predict using k-NN
     ####################
-    # X_train, y_train, X_val, y_val, X_test = knn.vectorize_and_encode_data(
+    # X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
     #     train=train_data,
     #     validation=validation_data,
     #     test=results_test_data
     # )
-    # knn_model, k_values, f1_scores = knn.train_model(
+    # knn_model, k_values, acc_scores = knn.train_model(
     #     X_train=X_train,
     #     y_train=y_train,
     #     X_val=X_val,
     #     y_val=y_val
     # )
-    # knn.plot_f1_vs_k(k_values=k_values, f1_scores=f1_scores)
+    # knn.plot_acc_vs_k(k_values=k_values, acc_scores=acc_scores)
     # results_test_predictions = knn.test_model(model=knn_model, test=X_test)
 
     ###################
     # Predict using SVM
     ###################
-    X_train, y_train, X_val, y_val, X_test = knn.vectorize_and_encode_data(
+    X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
         train=train_data,
         validation=validation_data,
         test=results_test_data
@@ -85,11 +85,11 @@ def main():
     ###############################################################
     # Print the results of the predictions on the results test data
     ###############################################################
-    # mgc_output.print_result(
-    #     data=results_test_data, 
-    #     predictions=results_test_predictions, 
-    #     unique_genres=train_data['Genre'].unique()
-    # )
+    mgc_output.print_result(
+        data=results_test_data, 
+        predictions=results_test_predictions, 
+        unique_genres=train_data['Genre'].unique()
+    )
 
 
 if __name__ == "__main__":

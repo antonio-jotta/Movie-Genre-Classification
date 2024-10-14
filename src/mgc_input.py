@@ -3,10 +3,15 @@ import re
 from unidecode import unidecode
 import nltk
 from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import OneHotEncoder
+from scipy.sparse import hstack
+
 
 # Download stopwords
 nltk.download('stopwords')
 stop_words = set(nltk.corpus.stopwords.words('english'))
+
 
 def split_data(train_data):
     """
@@ -27,6 +32,34 @@ def split_data(train_data):
     )
 
     return train_data, validation_data
+
+
+def vectorize_and_encode_data(train, validation, test):
+    # Vectorize the movie plots
+    vectorizer = TfidfVectorizer()
+    X_train_plot = vectorizer.fit_transform(train['Plot'])
+    X_val_plot = vectorizer.transform(validation['Plot'])
+
+    # One-hot encode the directors
+    encoder = OneHotEncoder(handle_unknown='ignore')
+    X_train_director = encoder.fit_transform(train[['Director']])
+    X_val_director = encoder.transform(validation[['Director']])
+
+    # Combine plot and director features using sparse matrix stacking
+    X_train = hstack([X_train_plot, X_train_director])
+    X_val = hstack([X_val_plot, X_val_director])
+
+    y_train = train['Genre']
+    y_val = validation['Genre']
+
+    # Use the vectorizer and encoder trained during the model training
+    X_plot = vectorizer.transform(test['Plot'])
+    X_director = encoder.transform(test[['Director']])
+
+    # Combine plot and director features
+    X_test = hstack([X_plot, X_director])
+
+    return X_train, y_train, X_val, y_val, X_test
 
 
 def check_imbalance(data):
@@ -69,7 +102,7 @@ class DataCleaner:
             tuple: A tuple containing the cleaned training dataset (pd.DataFrame) and the test dataset (pd.DataFrame).
         """
         # Read the training and test data
-        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"]).head(n=2000)
+        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"])
         test = pd.read_csv(self.test_path, delimiter='\t', names=["Title", "Industry", "Director", "Plot"])
 
         # Check for non-alphanumeric characters

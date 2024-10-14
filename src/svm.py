@@ -1,8 +1,5 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import SVC
-from sklearn.metrics import f1_score
-from scipy.sparse import hstack
+from sklearn.metrics import f1_score, accuracy_score
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import GridSearchCV
@@ -41,13 +38,22 @@ def do_svm_grid_search(X_train, y_train, X_val, y_val):
     ]
     
     # Create an SVM classifier
-    model = SVC(probability=True)  # Enabling probability estimation
+    model = SVC(probability=True, random_state=42)  # Enabling probability estimation
     
     # Set up GridSearchCV with cross-validation and scoring
+    # grid_search = GridSearchCV(
+    #     estimator=model, 
+    #     param_grid=param_grid, 
+    #     scoring='f1_weighted', 
+    #     cv=5,  # 5-fold cross-validation
+    #     verbose=2,  # Set to higher values for more output (e.g., verbose=1 or 2)
+    #     n_jobs=-1,  # Use all available cores
+    #     refit=True
+    # )
     grid_search = GridSearchCV(
         estimator=model, 
         param_grid=param_grid, 
-        scoring='f1_weighted', 
+        scoring='accuracy', 
         cv=5,  # 5-fold cross-validation
         verbose=2,  # Set to higher values for more output (e.g., verbose=1 or 2)
         n_jobs=-1,  # Use all available cores
@@ -72,9 +78,12 @@ def do_svm_grid_search(X_train, y_train, X_val, y_val):
 
     # Calculate the F1 score for the validation set
     best_f1 = f1_score(y_true=y_val, y_pred=predictions, average='weighted')
+    # Calculate the accuracy for the validation set
+    best_accuracy = accuracy_score(y_true=y_val, y_pred=predictions)
 
     print(f"Best parameters found: {grid_search.best_params_}")
-    print(f"Best F1 score on validation set: {best_f1:.4f}")
+    print(f"Best F1 score on validation set: {best_f1}")
+    print(f"Best Accuracy on validation set: {best_accuracy}")
 
     np.save('../output/grid_search_results.npy', grid_search.cv_results_)
     
@@ -106,7 +115,8 @@ def svm_model(X_train, y_train, X_val, y_val):
         C=best_params['C'], 
         gamma=best_params.get('gamma', 'scale'),
         # verbose=True,
-        probability=True
+        probability=True,
+        random_state=42
     )
 
     # Train the SVM model
@@ -124,16 +134,19 @@ def svm_model(X_train, y_train, X_val, y_val):
 
     # Calculate the F1 score for the validation set
     best_f1 = f1_score(y_true=y_val, y_pred=predictions, average='weighted')
+    # Calculate the accuracy for the validation set
+    best_accuracy = accuracy_score(y_true=y_val, y_pred=predictions)
 
     print(f"Best parameters found: {best_params}")
-    print(f"Best F1 score on validation set: {best_f1:.4f}")
+    print(f"Best F1 score on validation set: {best_f1}")
+    print(f"Best Accuracy on validation set: {best_accuracy}")
 
     return svm_model
 
 
 def plot_svm_history(grid_search_results):
     """
-    Plots the F1 score as a function of regularization parameter C for different SVM kernels.
+    Plots the accuracy score as a function of regularization parameter C for different SVM kernels.
 
     Args:
         grid_search_results (dict): The results from a grid search, typically the `cv_results_` from a 
@@ -141,7 +154,7 @@ def plot_svm_history(grid_search_results):
                                     and 'mean_test_score' among other fields.
 
     Returns:
-        None: Displays the plot showing the relationship between C, F1 score, and kernel.
+        None: Displays the plot showing the relationship between C, Acc score, and kernel.
     """
     # # Load the cv_results_ from the .npy file
     # cv_results = np.load('../output/grid_search_results.npy', allow_pickle=True).item()
@@ -150,28 +163,27 @@ def plot_svm_history(grid_search_results):
     # Convert grid search results to a pandas DataFrame for easier manipulation
     df_results = pd.DataFrame(grid_search_results)
 
-    # Filter the relevant columns: 'param_C' (regularization strength), 'param_kernel' (SVM kernel type),
-    # and 'mean_test_score' (mean F1 score from cross-validation)
+    # Filter the relevant columns
     df_filtered = df_results[['param_C', 'param_kernel', 'mean_test_score']]
 
     # Get the unique SVM kernels used in the grid search
     kernels = df_filtered['param_kernel'].unique()
 
-    # Loop through each kernel and plot the F1 score against the C parameter
+    # Loop through each kernel
     for kernel in kernels:
         # Filter the DataFrame for the current kernel
         df_kernel = df_filtered[df_filtered['param_kernel'] == kernel]
         
-        # Plot F1 score as a function of the regularization parameter C for the current kernel
+        # Plot accuracy score as a function of the regularization parameter C
         plt.plot(df_kernel['param_C'], df_kernel['mean_test_score'], label=kernel)
 
     # Customize the plot
     plt.xlabel('C (Regularization parameter)')
-    plt.ylabel('F1 Score')
+    plt.ylabel('Accuracy')
     plt.legend()  # Add a legend to distinguish between kernels
     plt.xscale('log')  # Use logarithmic scale for C, as SVM parameters often vary across orders of magnitude
     plt.grid(True)  # Add gridlines for better readability
-    plt.savefig("../plots/svm_f1_vs_c")
+    plt.savefig("../plots/svm_acc_vs_c")
 
 
 def test_model(model, test):
@@ -180,39 +192,9 @@ def test_model(model, test):
 
     Args:
         model: The trained SVM model.
-        vectorizer: The fitted TfidfVectorizer used during training.
-        encoder: The fitted OneHotEncoder used during training.
         test (pd.DataFrame): The test dataset with 'Plot' and 'Director' columns.
 
     Returns:
         np.ndarray: Predicted probabilities for each genre.
     """
     return model.predict_proba(test)
-
-
-def vectorize_and_encode_data(train, validation, test):
-    # Vectorize the movie plots
-    vectorizer = TfidfVectorizer()
-    X_train_plot = vectorizer.fit_transform(train['Plot'])
-    X_val_plot = vectorizer.transform(validation['Plot'])
-
-    # One-hot encode the directors
-    encoder = OneHotEncoder(handle_unknown='ignore')
-    X_train_director = encoder.fit_transform(train[['Director']])
-    X_val_director = encoder.transform(validation[['Director']])
-
-    # Combine plot and director features using sparse matrix stacking
-    X_train = hstack([X_train_plot, X_train_director])
-    X_val = hstack([X_val_plot, X_val_director])
-
-    y_train = train['Genre']
-    y_val = validation['Genre']
-
-    # Use the vectorizer and encoder trained during the model training
-    X_plot = vectorizer.transform(test['Plot'])
-    X_director = encoder.transform(test[['Director']])
-
-    # Combine plot and director features
-    X_test = hstack([X_plot, X_director])
-
-    return X_train, y_train, X_val, y_val, X_test
