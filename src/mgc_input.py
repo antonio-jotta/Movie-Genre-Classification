@@ -12,6 +12,7 @@ from scipy.sparse import hstack
 nltk.download('stopwords')
 stop_words = set(nltk.corpus.stopwords.words('english'))
 
+
 def split_data(data):
     """
     Splits the training data into training, validation datasets.

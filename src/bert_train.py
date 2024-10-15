@@ -78,7 +78,8 @@ def train_model(train, validation):
                             metrics=['accuracy'])
 
     # Early stopping to prevent overfitting
-    early_stopping = EarlyStopping(monitor='val_loss', patience=2, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    reducelr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=2)
 
     # Train the model with validation data
     classifier_model.fit(
@@ -86,8 +87,7 @@ def train_model(train, validation):
         y_train_encoded,
         validation_data=([tf.constant(X_val), directors_val_encoded], y_val_encoded),
         epochs=10,
-        batch_size=4,
-        callbacks=[early_stopping]
+        callbacks=[early_stopping, reducelr]
     )
 
     classifier_model.save('trained_models/bert_en_uncased')
