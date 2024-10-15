@@ -1,6 +1,6 @@
 import mgc_input
-import bert_train
-import bert_test
+# import bert_train
+# import bert_test
 import mgc_output
 import knn
 import svm
@@ -31,20 +31,20 @@ def main():
     # Predict using BERT
     ####################
     # # Uncomment the following line if the model needs to be trained again
-    bert_train.train_model(train_data, validation_data) 
+    # bert_train.train_model(train_data, validation_data) 
 
-    # Evaluate the model's accuracy on the test data
-    bert_test.accuracy_in_test_data(train_data=train_data, test_data=test_data)
+    # # Evaluate the model's accuracy on the test data
+    # bert_test.accuracy_in_test_data(train_data=train_data, test_data=test_data)
 
-    # Uncomment the following lines to get predictions on the results test data
-    results_test_predictions = bert_test.test_sample(test=results_test_data)
+    # # Uncomment the following lines to get predictions on the results test data
+    # results_test_predictions = bert_test.test_sample(test=results_test_data)
 
     ####################
     # Predict using k-NN
     ####################
     # X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
     #     train=train_data,
-    #     validation=validation_data,
+    #     validation=test_data,
     #     test=results_test_data
     # )
     # knn_model, k_values, acc_scores = knn.train_model(
@@ -61,7 +61,7 @@ def main():
     ###################
     X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
         train=train_data,
-        validation=validation_data,
+        validation=test_data,
         test=results_test_data
     )
     # # Do grid search to get the best parameters

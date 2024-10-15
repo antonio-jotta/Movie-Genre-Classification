@@ -1,7 +1,8 @@
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, classification_report
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def train_model(X_train, y_train, X_val, y_val):
@@ -27,7 +28,7 @@ def train_model(X_train, y_train, X_val, y_val):
     best_model = None
     accuracy_scores = []  # List to store accuracy scores for each k
 
-    k_values = range(1, 101)  # Loop through k values from 1 to 100
+    k_values = range(80, 101)  # Loop through k values from 1 to 100
     for k in k_values:
         model = KNeighborsClassifier(n_neighbors=k)
 
@@ -66,7 +67,23 @@ def train_model(X_train, y_train, X_val, y_val):
     best_f1 = f1_score(y_true=y_val, y_pred=predictions_best, average='weighted')
     print(f"F1 Score for best model (k={best_k}): {best_f1}")
 
+    do_confusion_matrix(y_true=y_val, y_pred=predictions)
+
     return best_model, k_values, accuracy_scores
+
+
+def do_confusion_matrix(y_true, y_pred):
+    # Generate confusion matrix
+    cm = confusion_matrix(y_true=y_true, y_pred=y_pred)
+
+    # Display the confusion matrix
+    plt.figure()
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", linewidths=0.1, linecolor='black', xticklabels=np.unique(y_true), yticklabels=np.unique(y_true))
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title('Confusion Matrix')
+    plt.tight_layout()
+    plt.savefig("../plots/knn_cm")
 
 
 def plot_acc_vs_k(k_values, acc_scores):
