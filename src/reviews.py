@@ -42,14 +42,45 @@ def main():
     ####################
     # Predict using k-NN
     ####################
-    # knn_model, vectorizer, encoder = knn.train_model(train=train_data, validation=test_data)
-    # results_test_predictions = knn.test_model(model=knn_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+    # X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
+    #     train=train_data,
+    #     validation=validation_data,
+    #     test=results_test_data
+    # )
+    # knn_model, k_values, acc_scores = knn.train_model(
+    #     X_train=X_train,
+    #     y_train=y_train,
+    #     X_val=X_val,
+    #     y_val=y_val
+    # )
+    # knn.plot_acc_vs_k(k_values=k_values, acc_scores=acc_scores)
+    # results_test_predictions = knn.test_model(model=knn_model, test=X_test)
 
     ###################
     # Predict using SVM
     ###################
-    # svm_model, vectorizer, encoder = svm.train_model(train=train_data, validation=test_data)
-    # results_test_predictions = svm.test_model(model=svm_model, vectorizer=vectorizer, encoder=encoder, test=results_test_data)
+    X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
+        train=train_data,
+        validation=validation_data,
+        test=results_test_data
+    )
+    # # Do grid search to get the best parameters
+    # svm_model, results = svm.do_svm_grid_search(
+    #     X_train=X_train,
+    #     y_train=y_train,
+    #     X_val=X_val,
+    #     y_val=y_val
+    # )
+    # svm.plot_svm_history(grid_search_results=results)
+    
+    # Use the best found model in grid search
+    svm_model = svm.svm_model(
+        X_train=X_train, 
+        y_train=y_train,
+        X_val=X_val,
+        y_val=y_val
+    )
+    results_test_predictions = svm.test_model(model=svm_model, test=X_test)
 
     ###############################################################
     # Print the results of the predictions on the results test data
