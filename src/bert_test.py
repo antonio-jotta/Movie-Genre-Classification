@@ -1,29 +1,36 @@
 import tensorflow as tf
-import tensorflow_hub as hub
-import tensorflow_text as text
 import numpy as np
 from sklearn.metrics import f1_score
-
+import json
 
 def test_sample(test):
     """
     Loads a pre-trained model and makes predictions on the provided test data.
 
     Args:
-        test (pd.DataFrame): The test dataset containing the 'Plot' column for predictions.
+        test (pd.DataFrame): The test dataset containing the 'Plot' and 'Director' columns for predictions.
+        director_to_index (dict): Mapping of director names to encoded indices.
 
     Returns:
-        np.ndarray: The predicted probabilities for each genre based on the input plots.
+        np.ndarray: The predicted probabilities for each genre based on the input plots and directors.
     """
     # Convert the 'Plot' column to a list
     X_test = test['Plot'].tolist()
-    
+
+    # Load the mapping from the saved file
+    with open('director_to_index.json', 'r') as f:
+        director_to_index = json.load(f)
+
+    # Encode the 'Director' column to indices using the loaded mapping
+    directors_test_encoded = np.array([
+        director_to_index.get(director, director_to_index["<UNK>"]) for director in test['Director'].tolist()
+    ], dtype=np.int32)
     # Load the pre-trained model
     loaded_model = tf.keras.models.load_model('trained_models/bert_en_uncased')
 
     # Make predictions using the loaded model
-    predictions = loaded_model.predict(tf.constant(X_test))
-    
+    predictions = loaded_model.predict([tf.constant(X_test), directors_test_encoded])
+
     return predictions
 
 
@@ -43,6 +50,10 @@ def accuracy_in_test_data(train_data, test_data):
 
     # Drop the "Genre" column from test_data for predictions
     test_data = test_data.drop(columns=['Genre'])
+
+    # Create a mapping from director names to encoded indices based on training data
+    unique_directors = sorted(set(train_data['Director']).union(set(test_data['Director'])))
+    director_to_index = {director: idx for idx, director in enumerate(unique_directors)}
 
     # Get predictions for the test data
     test_predictions = test_sample(test=test_data)

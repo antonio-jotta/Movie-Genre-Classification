@@ -25,19 +25,19 @@ def main():
     mgc_input.check_imbalance(data=train_data)
 
     # Split the training data into training (80%) and validation/test sets (10% each)
-    train_data, validation_data, test_data = mgc_input.split_data(train_data=train_data)
+    train_data, validation_data, test_data = mgc_input.split_data(train_data)
 
     ####################
     # Predict using BERT
     ####################
-    # # # Uncomment the following line if the model needs to be trained again
-    # bert_train.train_model(train=train_data, validation=validation_data) 
+    # # Uncomment the following line if the model needs to be trained again
+    bert_train.train_model(train_data, validation_data) 
 
-    # # Evaluate the model's accuracy on the test data
-    # bert_test.accuracy_in_test_data(train_data=train_data, test_data=test_data)
+    # Evaluate the model's accuracy on the test data
+    bert_test.accuracy_in_test_data(train_data=train_data, test_data=test_data)
 
-    # # Uncomment the following lines to get predictions on the results test data
-    # results_test_predictions = bert_test.test_sample(test=results_test_data)
+    # Uncomment the following lines to get predictions on the results test data
+    results_test_predictions = bert_test.test_sample(test=results_test_data)
 
     ####################
     # Predict using k-NN
@@ -54,11 +54,11 @@ def main():
     ###############################################################
     # Print the results of the predictions on the results test data
     ###############################################################
-    # mgc_output.print_result(
-    #     data=results_test_data, 
-    #     predictions=results_test_predictions, 
-    #     unique_genres=train_data['Genre'].unique()
-    # )
+    mgc_output.print_result(
+        data=results_test_data, 
+        predictions=results_test_predictions, 
+        unique_genres=train_data['Genre'].unique()
+    )
 
 
 if __name__ == "__main__":

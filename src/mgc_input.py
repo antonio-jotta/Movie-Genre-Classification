@@ -8,27 +8,26 @@ from sklearn.model_selection import train_test_split
 nltk.download('stopwords')
 stop_words = set(nltk.corpus.stopwords.words('english'))
 
-def split_data(train_data):
+def split_data(data):
     """
-    Splits the training data into training, validation, and test datasets.
+    Splits the training data into training, validation datasets.
 
     Args:
         train_data (pd.DataFrame): The original training data.
 
     Returns:
-        tuple: A tuple containing the training, validation, and test datasets (train_data, validation_data, test_data).
+        tuple: A tuple containing the training and validation datasets (train_data, validation_data).
     """
     # First, split off 80% for training and 20% for validation + test
-    train_data, temp_data = train_test_split(
-        train_data, 
+    train_data, tmp_data = train_test_split(
+        data, 
         test_size=0.2, 
         shuffle=True,
         random_state=42
     )
 
-    # Now, split the remaining 20% into 10% validation and 10% test
     validation_data, test_data = train_test_split(
-        temp_data, 
+        tmp_data, 
         test_size=0.5, 
         shuffle=True,
         random_state=42
@@ -77,7 +76,7 @@ class DataCleaner:
             tuple: A tuple containing the cleaned training dataset (pd.DataFrame) and the test dataset (pd.DataFrame).
         """
         # Read the training and test data
-        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"]).head(n=1000)
+        train = pd.read_csv(self.train_path, delimiter='\t', names=["Title", "Industry", "Genre", "Director", "Plot"])
         test = pd.read_csv(self.test_path, delimiter='\t', names=["Title", "Industry", "Director", "Plot"])
 
         # Check for non-alphanumeric characters
@@ -86,8 +85,14 @@ class DataCleaner:
         # Clean all columns in the training data
         train = train.map(self.remove_non_alphanum)
 
-        # Remove stop words in the 'Plot' column in the training data
+        # Remove stop words and lowercase in the 'Plot' column in the training data
         train['Plot'] = train['Plot'].apply(self.lowercase_and_remove_stopwords)
+        # Process the "Director" column similarly
+        train['Director'] = train['Director'].apply(self.lowercase_and_remove_stopwords)
+
+        # Repeat the same preprocessing for the test dataset
+        test['Plot'] = test['Plot'].apply(self.lowercase_and_remove_stopwords)
+        test['Director'] = test['Director'].apply(self.lowercase_and_remove_stopwords)
 
         # Output the cleaned training data to a txt file with tabs
         train.to_csv(f"{self.output_path}/cleaned_train_data.txt", sep='\t', header=False, index=False)
