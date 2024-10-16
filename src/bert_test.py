@@ -1,40 +1,59 @@
-import tensorflow as tf
+import torch
 import numpy as np
+from transformers import DistilBertTokenizer
 from sklearn.metrics import f1_score
-import json
+import ctypes
 
-def test_sample(test):
+def trim_memory():
+  libc = ctypes.CDLL("libc.so.6")
+  return libc.malloc_trim(0)
+
+def test_sample(test, model):
     """
-    Loads a pre-trained model and makes predictions on the provided test data.
+    Makes predictions on the provided test data using the provided model.
 
     Args:
         test (pd.DataFrame): The test dataset containing the 'Plot' and 'Director' columns for predictions.
-        director_to_index (dict): Mapping of director names to encoded indices.
+        model: The trained model for making predictions.
 
     Returns:
         np.ndarray: The predicted probabilities for each genre based on the input plots and directors.
     """
-    # Convert the 'Plot' column to a list
+    # Convert the 'Plot' and 'Director' columns to lists
     X_test = test['Plot'].tolist()
+    directors_test = test['Director'].tolist()
 
-    # Load the mapping from the saved file
-    with open('director_to_index.json', 'r') as f:
-        director_to_index = json.load(f)
+    # Set the model to evaluation mode
+    model = model.to("cpu")
+    model.eval()
 
-    # Encode the 'Director' column to indices using the loaded mapping
-    directors_test_encoded = np.array([
-        director_to_index.get(director, director_to_index["<UNK>"]) for director in test['Director'].tolist()
-    ], dtype=np.int32)
-    # Load the pre-trained model
-    loaded_model = tf.keras.models.load_model('trained_models/bert_en_uncased')
+    # Tokenization
+    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+    tokenizer.add_special_tokens({'additional_special_tokens': ['[DIRECTOR]']})
 
-    # Make predictions using the loaded model
-    predictions = loaded_model.predict([tf.constant(X_test), directors_test_encoded])
+    trim_memory()
+    # Tokenize the test inputs with the director information
+    with torch.no_grad():  # Disable gradient calculation
+        director_names = [f"[DIRECTOR] {director}" for director in directors_test]
+        texts_with_directors = [f"{director_name} {text}" for director_name, text in zip(director_names, X_test)]
+        text_inputs = tokenizer(texts_with_directors, padding=True, truncation=True, return_tensors='pt', max_length=512)
 
-    return predictions
+        # Move inputs to CPU
+        input_ids = text_inputs['input_ids'].to("cpu")
+        attention_mask = text_inputs['attention_mask'].to("cpu")
+
+        # Make predictions using the model
+        print("calling model test")
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+
+        # Apply softmax to get probabilities
+        predictions = torch.softmax(outputs['logits'], dim=1)
+
+    return predictions.cpu().numpy()  # Convert to numpy array and move to CPU if necessary
 
 
-def accuracy_in_test_data(train_data, test_data):
+
+def accuracy_in_test_data(train_data, test_data, model):
     """
     Calculates and interprets the accuracy of predictions on the test data.
 
@@ -51,12 +70,8 @@ def accuracy_in_test_data(train_data, test_data):
     # Drop the "Genre" column from test_data for predictions
     test_data = test_data.drop(columns=['Genre'])
 
-    # Create a mapping from director names to encoded indices based on training data
-    unique_directors = sorted(set(train_data['Director']).union(set(test_data['Director'])))
-    director_to_index = {director: idx for idx, director in enumerate(unique_directors)}
-
     # Get predictions for the test data
-    test_predictions = test_sample(test=test_data)
+    test_predictions = test_sample(test_data, model)
 
     # Interpret the predictions against the true genre labels
     interpret_predictions_test_data(
@@ -64,7 +79,6 @@ def accuracy_in_test_data(train_data, test_data):
         predictions=test_predictions, 
         unique_genres=train_data['Genre'].unique()
     )
-    
 
 def interpret_predictions_test_data(genre_labels, predictions, unique_genres):
     """

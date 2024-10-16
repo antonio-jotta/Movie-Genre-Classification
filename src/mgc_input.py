@@ -25,7 +25,7 @@ def split_data(data):
     """
     # First, split off 80% for training and 20% for validation + test
     train_data, tmp_data = train_test_split(
-        data, 
+        data.head(100), 
         test_size=0.2, 
         shuffle=True,
         random_state=42

@@ -1,10 +1,10 @@
-import tensorflow as tf
-import tensorflow_hub as hub
+import torch
+from transformers import DistilBertTokenizer, DistilBertModel, Trainer, TrainingArguments
+from sklearn.preprocessing import LabelEncoder
 import numpy as np
-from sklearn.metrics import f1_score
-from tensorflow.keras.callbacks import EarlyStopping
-import tensorflow_addons as tfa
+from datasets import Dataset
 import json
+from transformers import EarlyStoppingCallback
 
 def train_model(train, validation):
     # Prepare the training data
@@ -17,77 +17,93 @@ def train_model(train, validation):
     y_val = validation['Genre'].tolist()
     directors_val = validation['Director'].tolist()
 
-    # Encode the director names as integer indices
-    # Encode the director names as integer indices
-    unique_directors = sorted(set(train['Director']).union(set(validation['Director'])))
-    director_to_index = {director: idx for idx, director in enumerate(unique_directors)}
-    director_to_index["<UNK>"] = len(director_to_index) # Spot for OOV words
+    # Encode genres
+    label_encoder = LabelEncoder()
+    y_train_encoded = label_encoder.fit_transform(y_train)
+    y_val_encoded = label_encoder.transform(y_val)
 
-    # Save the mapping for later use in testing
-    with open('director_to_index.json', 'w') as f:
-        json.dump(director_to_index, f)
+    # Tokenization
+    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+    tokenizer.add_special_tokens({'additional_special_tokens': ['[DIRECTOR]']})
 
-    directors_train_encoded = np.array([
-        director_to_index.get(director, director_to_index["<UNK>"]) for director in directors_train
-    ], dtype=np.int32)
+    def tokenize_function(examples):
+        director_names = [f"[DIRECTOR] {director}" for director in examples['director']]
+        texts_with_directors = [f"{director_name} {text}" for director_name, text in zip(director_names, examples['text'])]
+        return tokenizer(texts_with_directors, padding='max_length', truncation=True, max_length=512)
 
-    directors_val_encoded = np.array([
-        director_to_index.get(director, director_to_index["<UNK>"]) for director in directors_val
-    ], dtype=np.int32)
-    
-    # Preprocess and BERT models from TensorFlow Hub
-    preprocess_url = "https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3"
-    bert_url = "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/3"
+    # Prepare the datasets for Hugging Face
+    train_dataset = Dataset.from_dict({'text': X_train, 'label': y_train_encoded, 'director': directors_train})
+    val_dataset = Dataset.from_dict({'text': X_val, 'label': y_val_encoded, 'director': directors_val})
 
-    # Define the classifier model
-    def build_classifier_model(num_classes, embedding_dim=16):
-        # Text input and BERT processing
-        text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
-        preprocessing_layer = hub.KerasLayer(preprocess_url, name='preprocessing')
-        encoder_inputs = preprocessing_layer(text_input)
-        encoder = hub.KerasLayer(bert_url, trainable=True, name='BERT_encoder')
-        bert_outputs = encoder(encoder_inputs)
-        bert_output = bert_outputs['pooled_output']
+    train_dataset = train_dataset.map(tokenize_function, batched=True)
+    val_dataset = val_dataset.map(tokenize_function, batched=True)
 
-        # Director input and embedding layer
-        director_input = tf.keras.layers.Input(shape=(1,), dtype=tf.int32, name='director')
-        director_embedding = tf.keras.layers.Embedding(input_dim=len(director_to_index)+1, output_dim=embedding_dim, trainable=False)(director_input)
-        director_embedding = tf.keras.layers.Flatten()(director_embedding)
+    # Set the format for PyTorch
+    train_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label'])
+    val_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label'])
 
-        # Concatenate BERT output with director embedding
-        concatenated = tf.keras.layers.Concatenate()([bert_output, director_embedding])
+    # Define a model class without the director embedding
+    class DistilBertForGenreClassification(torch.nn.Module):
+        def __init__(self, num_labels):
+            super(DistilBertForGenreClassification, self).__init__()
+            self.bert = DistilBertModel.from_pretrained('distilbert-base-uncased')
+            self.classifier = torch.nn.Sequential(
+                torch.nn.Dropout(0.3),
+                torch.nn.Linear(self.bert.config.hidden_size, num_labels)
+            )
+            self.loss_fn = torch.nn.CrossEntropyLoss()
 
-        # Final dense layers
-        net = tf.keras.layers.Dropout(0.1)(concatenated)
-        net = tf.keras.layers.Dense(num_classes, activation='softmax', name='classifier')(net)
-        return tf.keras.Model([text_input, director_input], net)
+        def forward(self, input_ids, attention_mask, labels=None):
+            # Get BERT output
+            bert_outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+            pooled_output = bert_outputs.last_hidden_state[:, 0, :]  # CLS token output
+            # Get logits from classifier
+            logits = self.classifier(pooled_output)
+            # Compute loss if labels are provided
+            loss = None
+            if labels is not None:
+                loss = self.loss_fn(logits, labels)
+            return {'loss': loss, 'logits': logits}
 
-    # Build and compile the model
-    num_classes = len(train['Genre'].unique())
-    classifier_model = build_classifier_model(num_classes)
+    # Instantiate the model
+    num_labels = len(label_encoder.classes_)
+    model = DistilBertForGenreClassification(num_labels=num_labels)
+    model.bert.resize_token_embeddings(len(tokenizer))
 
-    # Convert genres to integer indices with dtype int32
-    unique_genres = train['Genre'].unique()
-    genre_to_index = {genre: idx for idx, genre in enumerate(unique_genres)}
-    
-    y_train_encoded = np.array([genre_to_index[genre] for genre in y_train], dtype=np.int32)
-    y_val_encoded = np.array([genre_to_index[genre] for genre in y_val], dtype=np.int32)
-
-    classifier_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=2e-5),
-                            loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-                            metrics=['accuracy'])
-
-    # Early stopping to prevent overfitting
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
-    reducelr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=2)
-
-    # Train the model with validation data
-    classifier_model.fit(
-        [tf.constant(X_train), directors_train_encoded],
-        y_train_encoded,
-        validation_data=([tf.constant(X_val), directors_val_encoded], y_val_encoded),
-        epochs=10,
-        callbacks=[early_stopping, reducelr]
+    # Training arguments
+    training_args = TrainingArguments(
+        output_dir='./results',
+        evaluation_strategy='epoch',
+        save_strategy='epoch',
+        learning_rate=2e-5,
+        num_train_epochs=10,
+        weight_decay=0.1,
+        load_best_model_at_end=True,
+        metric_for_best_model='accuracy',
+        greater_is_better=True,
     )
 
-    classifier_model.save('trained_models/bert_en_uncased')
+    # Define compute_metrics function for evaluation
+    def compute_metrics(eval_pred):
+        predictions, labels = eval_pred
+        predictions = np.argmax(predictions, axis=1)
+        accuracy = (predictions == labels).mean()
+        return {'accuracy': accuracy}
+
+    # Data collator
+    from transformers import DataCollatorWithPadding
+    data_collator = DataCollatorWithPadding(tokenizer)
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        compute_metrics=compute_metrics,
+        data_collator=data_collator,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
+    )
+
+    # Train the model
+    trainer.train()
+    return model
