@@ -1,6 +1,6 @@
 import mgc_input
-import bert_train
-import bert_test
+# import bert_train
+# import bert_test
 import mgc_output
 import knn
 import svm
@@ -44,7 +44,7 @@ def main():
     ####################
     # X_train, y_train, X_val, y_val, X_test = mgc_input.vectorize_and_encode_data(
     #     train=train_data,
-    #     validation=validation_data,
+    #     validation=test_data,
     #     test=results_test_data
     # )
     # knn_model, k_values, acc_scores = knn.train_model(

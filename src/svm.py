@@ -1,9 +1,10 @@
 from sklearn.svm import SVC
-from sklearn.metrics import f1_score, accuracy_score
+from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, classification_report
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import GridSearchCV
 import pandas as pd
+import seaborn as sns
 
 
 def do_svm_grid_search(X_train, y_train, X_val, y_val):
@@ -141,7 +142,23 @@ def svm_model(X_train, y_train, X_val, y_val):
     print(f"Best F1 score on validation set: {best_f1}")
     print(f"Best Accuracy on validation set: {best_accuracy}")
 
+    do_confusion_matrix(y_true=y_val, y_pred=predictions)
+
     return svm_model
+
+
+def do_confusion_matrix(y_true, y_pred):
+    # Generate confusion matrix
+    cm = confusion_matrix(y_true=y_true, y_pred=y_pred)
+
+    # Display the confusion matrix
+    plt.figure()
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", linewidths=0.1, linecolor='black', xticklabels=np.unique(y_true), yticklabels=np.unique(y_true))
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title('Confusion Matrix')
+    plt.tight_layout()
+    plt.savefig("../plots/svm_cm")
 
 
 def plot_svm_history(grid_search_results):
