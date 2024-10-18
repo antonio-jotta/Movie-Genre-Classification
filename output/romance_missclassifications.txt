@@ -1,0 +1,31 @@
+Examples of misclassified 'romance' movies:
+Title: Abhinetri
+Director: satabdi roy
+Plot: chance meeting assistant scientist shekar established stage dancer singer anjana results love shekar mother lives separately anjana orphaned early age shekars mom approves anjana get married anjana stops involvement dancing singing spent next several months relative harmony anjana finds shekar spending time laboratory decides take dancing singing augur well shekar arguments ensue decide live separately shekars mom comes visit shekar anjana compromise live together thought would provide releif mother old age living together discover missing spice wedlock
+True Genre: romance
+Predicted Genre: drama
+--------------------------------------------------------------------------------
+Title: Romance
+Director: clarence brown
+Plot: new years eve harry elliott nugent tells grandfather gavin gordon bishop intends marry actress even though frowned upon social class however grandfather recounts via flashback cautionary tale great love affair fallen women youth 28 years old tom armstrong son aristocratic family rector st giles meets famous italian opera star rita cavallini greta garbo evening party given cornelius van tuyl lewis stone tom falls love rita even though rumors van tuyls mistress toms family disapproves rita continues pursue discovers lying true nature relationship van tuyl though forgives loves different lives different social class make engagement untenable ultimately old bishop later married harrys grandmother counsels harry marry woman loves regardless consequences
+True Genre: romance
+Predicted Genre: drama
+--------------------------------------------------------------------------------
+Title: Hum Ho Gaye Aapke
+Director: agathiyan
+Plot: rishi oberoi son oberoi family wealthy palatial home rishi womanizer often drinks one day comes across attractive young lady later comes know chandni gupta chandni impressed rishis advances ignores chandni employed organization love coworker mohan sachdev mohan chandni plan marry met opposition mohans parents result mohan marries someone else rishi comes know offers console chandni friend chandni decide would prefer womanizer former admirer friend
+True Genre: romance
+Predicted Genre: drama
+--------------------------------------------------------------------------------
+Title: Brown Sugar
+Director: rick famuyiwa
+Plot: brown sugar film follows evolving relationship sidney sanaa lathan attractive young woman appointed editorinchief hiphop magazine xxl dre taye diggs ar millennium records bound together since early childhood news dre preparing married reese nicole ari parker successful entertainment attorney sends sidney subconscious tizzy suddenly doesnt seem know behave around dre anymore impulsive kiss eve wedding sends fissures doubt cracking every direction dre gets married begins settle life decision sign untalented commercially viable rap group forces dre choose love true hiphop job decides quit job start record company focusing bringing back real hip hop generation fell love reese however understanding thus supportive venture additionally sidney draws closer dre due partnership label jealousy develops dre sidneys friendship sidney also begun live life budding relationship kelby boris kodjoe receives proposal boyfriend accepts turmoil ensues dre finds reese secret liaisons man gym texts reese confirm rendezvous dre brings sid bust act leads night shared passion dre sid opens sids eyes fact prepared get married kelby calls engagement searching dre sees reese dre parting embrace misconstrues hot 97 waiting cavis first single play angie martinez show dre hears sid talking new book used love though based love affair hiphop really chronicled timeline love affair dre recognizes rushes station confront feelings well meanwhile production booth sids cousin francine finally asks cavi date something trying since first meeting film ends cavis song playing park love hiphop began
+True Genre: romance
+Predicted Genre: comedy
+--------------------------------------------------------------------------------
+Title: Going Steady
+Director: fred f sears
+Plot: julie ann turner 17 wants travel car friends olive woody pasadena california home reno nevada boyfriend calvin potter participating basketball game mom grace talks opposed dad gordon letting go calvin makes gamewinning shot everyone celebrates afterward julie ann excitement suggests calvin elope aunt lola age calvin agrees decide keep wedding secret get home time goes julie ann asks friend olive accompany see obstetrician rumor spreads olive expecting baby julie ann admits actually news broken parents comes news calvin moves turners accepted motherinlaw grace infuriating fatherinlaw gordon whose demand marriage annulled rejected julie pregnant calvin quarrels bride reluctantly takes job dads hardware store aunt lola arrives time julie anns graduation day turns helpful grace finally persuades gordon give kids blessing beginning new lives
+True Genre: romance
+Predicted Genre: comedy
+--------------------------------------------------------------------------------

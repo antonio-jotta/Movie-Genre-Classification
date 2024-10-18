@@ -1,0 +1,29 @@
+
+=== Custom Plot Predictions ===
+
+Title: Laughing Shadows
+Plot:
+In a quiet town, a group of friends gathers for a fun night of laughter and games, but things take a terrifying turn when they discover a haunted board game that unleashes a hilarious yet deadly ghost.
+Predicted Genre: horror
+--------------------------------------------------------------------------------
+Title: Funny Hauntings
+Plot:
+A family moves into a new house, hoping for a fresh start filled with joy and laughter. Strange, funny noises in the night lead them to a creepy basement where they encounter laughing dolls that bring their worst nightmares to life.
+Predicted Genre: horror
+--------------------------------------------------------------------------------
+Title: Jokes of the Dead
+Plot:
+An aspiring comedian visits an abandoned comedy club rumored to be haunted. Amidst the echoes of past laughs, he finds a joke book that brings him fame but at a horrifying cost.
+Predicted Genre: comedy
+--------------------------------------------------------------------------------
+Title: The Hilarious Curse
+Plot:
+During a comedy festival, a mysterious performer captivates audiences with dark humor that causes uncontrollable laughter, leading to bizarre and deadly consequences.
+Predicted Genre: comedy
+--------------------------------------------------------------------------------
+Title: Pranks Gone Wrong
+Plot:
+A group of teenagers decides to spend a funny weekend at a remote cabin. Their jokes and pranks awaken an ancient evil that twists their laughter into screams.
+Predicted Genre: horror
+--------------------------------------------------------------------------------
+
