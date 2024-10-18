@@ -28,7 +28,7 @@ def train_model(X_train, y_train, X_val, y_val):
     best_model = None
     accuracy_scores = []  # List to store accuracy scores for each k
 
-    k_values = range(80, 101)  # Loop through k values from 1 to 100
+    k_values = range(1, min(101, X_val.shape[0]))    
     for k in k_values:
         model = KNeighborsClassifier(n_neighbors=k)
 
